@@ -7,5 +7,12 @@
 </head>
 <body>
  {{{ body }}}
+ <script src="../../socket.io/socket.io.js"></script>
 </body>
 </html>
+<script>
+    const socket = io();
+    socket.on('connect', data => {
+        console.log('Client side connected');
+    });
+</script>
