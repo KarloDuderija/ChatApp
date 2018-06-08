@@ -12,7 +12,11 @@
 </html>
 <script>
     const socket = io();
-    socket.on('connect', data => {
-        console.log('Client side connected');
+    socket.on('connect', data =>
+        console.log('Client side connected home')
+    );
+    socket.on('login', data => {
+            console.log('Client side connected');
+            socket.emit('hello?');
     });
 </script>
