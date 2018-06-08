@@ -1,0 +1,4 @@
+export const SOCKETIO_EVENTS = {
+    SNDMSG: 'SNDMSG',
+    ROOMENTRY: 'ROOMENTRY',
+};
