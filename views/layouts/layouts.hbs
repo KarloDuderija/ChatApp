@@ -1,22 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/static/scripts/myscripts.js"></script>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <title>{{ title }}</title>
 </head>
 <body>
- {{{ body }}}
- <script src="../../socket.io/socket.io.js"></script>
+{{{ body }}}
 </body>
 </html>
-<script>
-    const socket = io();
-    socket.on('connect', data =>
-        console.log('Client side connected home')
-    );
-    socket.on('login', data => {
-            console.log('Client side connected');
-            socket.emit('hello?');
-    });
-</script>

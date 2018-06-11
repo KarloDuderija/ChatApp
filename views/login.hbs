@@ -1,7 +1,8 @@
-<div class="login">
+<div class="log">
+<form action="/" method="POST">
 <h1>{{title}}</h1>
-<input placeholder="Username"/>
-<br/><br/>
-<input placeholder="Password"/>
-<button>Login</button>
+<input id="login-username" type="text" placeholder="Username" name="username"/>
+<br/><br/><input id="login-password" type="password" placeholder="Password" name="password"/><br/><br/>
+    <input type="submit" value="Login" id="proceed" onclick="triggerSocket()"/>
+    </form>
 </div>
