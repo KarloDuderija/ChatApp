@@ -2,5 +2,19 @@
 <p>Welcome to {{title}}</p>
 <div class="container">
     <br/>
-    <a href="/login"> {{user}} </a>
+    <ul id="ListOfUsers">
+        <li>{{user}}</li>
+    </ul>
+
+    <button>LOGOUT</button>
+    <br/>
+    <br/>
+    <button>CREATE ROOM</button>
+    <div id="chat-window">
+        <div id="output">
+        </div>
+    </div>
+    <input id="handle" type="text" placeholder="Handle">
+    <input id="messages" type="text" placeholder="Message">
+    <button id="send">Send</button>
 </div>
