@@ -8,7 +8,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const server = require('http').createServer(app);
 const port = 3000;
-let aUser;
+const aUser = [];
 const io = require('socket.io')(server);
 
 app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layouts'}));
@@ -27,10 +27,14 @@ io.on('connection', (socket) => {
         console.log('Test IO connection with object', obj);
     });
     socket.on('user', (user) => {
-       aUser = user;
+       aUser.push(user);
        console.log('His name is:', user);
     });
-    socket.broadcast.emit('LoggedIn' , aUser);
+    socket.on('newUser', (data) => {
+        socket.broadcast.emit('LoggedIn' , aUser);
+        socket.emit('FirstLog', aUser);
+        console.log('Successful Broadcast SS');
+    });
 });
 
 
@@ -40,7 +44,7 @@ app.get('/', (req, res, next) => {
 });
 
 app.post('/', (req, res, next) => {
-    res.render('admin', {title:'ChatApp', user: req.body.username});
+    res.render('admin', {title:'ChatApp'});
 });
 
 app.get('/login', (req, res, next) => {
