@@ -1,36 +1,18 @@
+const socket = io("http://localhost:3000");
 
-const socket = io('http://localhost:3000');
 let username;
-
 function testClick() {
-    console.log("test click", socket);
-    socket.emit("TEST", {foo: 'bar'})
+  console.log("test click", socket);
+  socket.emit("TEST", { foo: "bar" });
 }
 
-function triggerSocketForUser (){
-    console.log("Client has logged in successfully: ");
-    username = document.getElementById('login-username').value;
-    socket.emit('user', username);
+function triggerSocketForUser() {
+  console.log("Client has logged in successfully: ");
+  username = document.getElementById("login-username").value;
+  socket.emit("user", username);
+  console.log(username);
+  return username;
 }
-
-
-
-//
-function addingUser(username){
-    console.log("Trying to append element into list!");
-    let parentEl = document.getElementById('ListOfUsers');
-    let newEl = document.createElement('li');
-    let user_id = document.createTextNode(username);
-    newEl.appendChild(user_id);
-    parentEl.appendChild(newEl);
-}
-//
-// function listenersIndexPage() {
-//     console.log('listenersIndexPage');
-//     socket.on('LoggedUsers' , (message) => {
-//         console.log(message)
-//     });
-// }
 
 // function eventSndMsg () {
 //     let message = document.getElementById('message');
@@ -53,56 +35,61 @@ function addingUser(username){
 var user_id = null;
 var newUser = true;
 var el = document.querySelector("#TestBDC");
-var parentEl = document.querySelector('#ListOfUsers');
+var parentEl = document.querySelector("#ListOfUsers");
 if (el) {
-    window.addEventListener("load", function(e) {
-        socket.emit('newUser', {
-            username: username
-        });
+  window.addEventListener("load", function(e) {
+    socket.emit("newUser", {
+      username: username
     });
-
-    socket.on('LoggedIn', function(data) {
-        if(data.length !== 0)
-        console.log("User Joined: ", data[data.length-1]);
-        console.log(data);
-        newUser = false;
-        user_id = document.createTextNode(data[data.length-1]);
-        var newEl = document.createElement('li');
-        newEl.setAttribute("onclick", "triggerTalk(user_id)");
-        newEl.appendChild(user_id);
-        parentEl.appendChild(newEl);
+  });
+  // socket.on('disconnect', function(){
+  //     //ELIMINATE THE USER WHO DC
+  // });
+  socket.on("LoggedIn", function(data) {
+    updateUsers();
+    data.map(el => {
+      user_id = document.createTextNode(el);
+      var newEl = document.createElement("li");
+      newEl.setAttribute("id", el);
+      newEl.setAttribute("onclick", "triggerTalk(this.id)");
+      newEl.appendChild(user_id);
+      parentEl.appendChild(newEl);
     });
-    if(newUser) {
-        socket.on('FirstLog', function(data) {
-            for(var i=0; i<data.length-1 ; i++){
-                user_id = document.createTextNode(data[i]);
-                var newEl = document.createElement('li');
-                newEl.setAttribute("onclick", "triggerTalk()");
-                newEl.appendChild(user_id);
-                parentEl.appendChild(newEl);
-            }
-            if(data.length !== 0)
-                console.log("User Joined: ", data[data.length-1]);
-            console.log(data);
-        newUser = false;
-        });
-    }
-    var usersToChat = document.getElementsByClassName('user');
-    usersToChat.onclick = function() {
-        alert("This works");
-    };
+  });
+      socket.on("conversation-private-post", function(data) {
+        var modal = document.querySelector(".room-modal");
+        modal.style.display = "block";
+        console.log({ message: data.message });
+      });
 }
 
-function triggerTalk() {
-    console.log("works");
+function triggerTalk(name) {
+  var modal = document.querySelector(".room-modal");
+  modal.style.display = "block";
+  socket.emit("subscribe", name);
+  socket.emit("send-msg", {
+    room: name,
+    message: "some message"
+  });
 }
 
-var roomId = document.querySelector("#room");
-if(roomId) {
-    var modal = document.querySelector(".room-modal");
-    roomId.addEventListener("click" ,function(){
-        modal.display="block";
-    });
+function logoutThisUser() {
+  console.log("change with erasing from array in server!");
+}
+function roomCreation() {
+  var modal = document.querySelector(".room-modal");
+  modal.style.display = "block";
 }
 
+function exitRoom() {
+  var modal = document.querySelector(".room-modal");
+  //empty all messages
+  modal.style.display = "none";
+}
 
+function updateUsers() {
+  var myNode = document.getElementById("ListOfUsers");
+  while (myNode.firstChild) {
+    myNode.removeChild(myNode.firstChild);
+  }
+}

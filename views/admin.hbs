@@ -8,28 +8,23 @@
         <ul id="ListOfRooms">
         </ul>
     </div>
-    <button id="room">CREATE ROOM</button>
-    <div id="chat-window">
-        <div id="output">
-            opala
-        </div>
-    <input id="messages" type="text" placeholder="Message">
-    <button id="send">Send</button>
-    </div>
+    <button id="room" onclick="roomCreation()">CREATE ROOM</button>
+    <button id="logout" onclick="logoutThisUser()"><a href="/logout">LOGOUT</a></button>
     <div class="room-modal">
         <div class="modal-content">
-        <span class="close">&times;</span>
-        <p>Some text in the Modal..</p>
-        <div id="room-output">
-        </div>
+            <span class="close" onclick="exitRoom()">&times;</span>
+            <br/>
+            <div id="room-output">
+            </div>
+            <input id="rm-messages" type="text" placeholder="Message">
+            <button id="rm-send">Send</button>
         </div>
     </div>
-</div>
 <style>
     .room-modal {
         display: none; /* Hidden by default */
         position: fixed; /* Stay in place */
-        /*z-index: 1; !* Sit on top *!*/
+        z-index: 1;
         left: 0;
         top: 0;
         width: 100%; /* Full width */
@@ -38,19 +33,23 @@
         background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
     }
     .modal-content {
-        background-color: darkgray;
-        margin: 15% auto; /* 15% from the top and centered */
-        padding: 20px;
+        background-color: white;
+        margin: 10% auto; /* 15% from the top and centered */
+        padding: 10px;
         border: 1px solid #888;
         width: 80%; /* Could be more or less, depending on screen size */
+        height: 80%;
     }
-    #ListOfRooms {
-        position: fixed;
-        right: 20em;
+    #room-output {
+        height: 80%;
+        border: 1px solid darkgray;
+        color: white;
     }
-    #ListOfUsers {
-        position: fixed;
-        left: 20em;
+
+    .block {
+        border: 1px solid darkgray;
+        height: 400px;
+        overflow: auto;
     }
     .close {
         color: #aaa;
@@ -58,14 +57,11 @@
         font-size: 28px;
         font-weight: bold;
     }
-
     .close:hover,
     .close:focus {
         color: black;
         text-decoration: none;
         cursor: pointer;
     }
-    #output {
-        font-size: 80px;
-    }
+
 </style>

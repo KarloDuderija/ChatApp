@@ -10,7 +10,6 @@ const server = require('http').createServer(app);
 const port = 3000;
 const aUser = [];
 const io = require('socket.io')(server);
-
 app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layouts'}));
 
 app.set('port', port);
@@ -31,9 +30,17 @@ io.on('connection', (socket) => {
        console.log('His name is:', user);
     });
     socket.on('newUser', (data) => {
-        socket.broadcast.emit('LoggedIn' , aUser);
-        socket.emit('FirstLog', aUser);
-        console.log('Successful Broadcast SS');
+        io.emit('LoggedIn' , aUser);
+    });
+    socket.on('subscribe' , function(room) {
+        console.log('Joining room of: ', room);
+        socket.join(room);
+    }); // name + tempName
+    socket.on('send-msg', function(data) {
+       console.log("sending room post");
+       socket.broadcast.to(data.room).emit('conversation-private-post' , {
+          message: data.message
+       });
     });
 });
 
