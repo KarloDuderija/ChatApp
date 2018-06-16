@@ -8,7 +8,8 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const server = require('http').createServer(app);
 const port = 3000;
-const aUser = [];
+//REQUIRES CLASS - implement with new instance
+const users = [];
 const io = require('socket.io')(server);
 app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layouts'}));
 
@@ -26,22 +27,25 @@ io.on('connection', (socket) => {
         console.log('Test IO connection with object', obj);
     });
     socket.on('user', (user) => {
-       aUser.push(user);
+       users.push(user);
        console.log('His name is:', user);
     });
     socket.on('newUser', (data) => {
-        io.emit('LoggedIn' , aUser);
+        io.emit('LoggedIn' , users, data);
+        console.log(users);
     });
-    socket.on('subscribe' , function(room) {
-        console.log('Joining room of: ', room);
-        socket.join(room);
-    }); // name + tempName
-    socket.on('send-msg', function(data) {
-       console.log("sending room post");
-       socket.broadcast.to(data.room).emit('conversation-private-post' , {
-          message: data.message
-       });
+    socket.on('create' , (data1, data2) => {
+        socket.join('ROOM:' + data1 + data2);
+        socket.on('messages' , (message , username) => {
+            io.sockets.in('ROOM:' + data1 + data2).emit('newMsg' , message, username);
+        });
+        console.log('ROOM:' + data1 + data2);
     });
+    socket.on('findHim' , (data , name) => {
+       socket.broadcast.emit('finding' , data, name);
+    });
+    // socket.leave('ROOM:' +data2);
+    // socket.broadcast.to('ROOM:' +data2).emit('newMsg' , 'Welcome');
 });
 
 
