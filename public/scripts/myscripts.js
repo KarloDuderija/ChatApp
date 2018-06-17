@@ -25,9 +25,6 @@ if (el) {
         var user = localStorage.getItem('username');
         localStorage.setItem(socket.id, user);
     });
-    // socket.on('disconnect', function(){
-    //     //ELIMINATE THE USER WHO DC
-    // });
     socket.on("LoggedIn", function (data) {
         console.log(data);
         updateUsers();
@@ -46,41 +43,42 @@ if (el) {
             }
         }
     });
-
+        //every user listens for PM req
     socket.on('finding' , (data, name) => {
-        console.log('atest'+localStorage.getItem(socket.id));
-        if(''+localStorage.getItem(socket.id) === ''+data){
+        if(''+localStorage.getItem(socket.id) === ''+data) {
+            console.log(''+localStorage.getItem(socket.id)+data+name);
+            console.log("im in!");
             socket.emit('create' , data , name );
             var modal = document.querySelector(".room-modal");
             modal.style.display = "block";
-            socket.on('newMsg' ,(message , sender) => {
-                var par = document.getElementById('room-output');
-                var text = document.createTextNode(sender + ': ' + message);
-                var newEl = document.createElement("strong");
-                newEl.appendChild(text);
-                var newE = document.createElement("p");
-                newE.appendChild(newEl);
-                par.appendChild(newE);
-            });
+            receiveMsg();
         }
     });
 
 }
-
+function receiveMsg() {
+    socket.on('newMsg' ,(message , sender) => {
+        var par = document.getElementById('room-output');
+        var text = document.createTextNode(sender + ': ' + message);
+        var newEl = document.createElement("strong");
+        newEl.appendChild(text);
+        var newE = document.createElement("p");
+        newE.appendChild(newEl);
+        par.appendChild(newE);
+    });
+}
 
 function triggerTalk(name) {
-  var modal = document.querySelector(".room-modal");
-  modal.style.display = "block";
-  findUser(name);
-  createRoom(name);
+    findUser(name);
+    console.log("im in!");
+    socket.emit('create' , name , localStorage.getItem(socket.id));
+    var modals = document.querySelector(".room-modal");
+    modals.style.display = "block";
+  receiveMsg();
 }
 
 function findUser (name) {
     socket.emit('findHim' , name, localStorage.getItem(socket.id));
-}
-
-function createRoom (name) {
-    socket.emit('create' , name , localStorage.getItem(socket.id) );
 }
 
 function logoutThisUser() {
@@ -90,21 +88,16 @@ function logoutThisUser() {
 
 function sendMessages() {
     var msg = document.getElementById('rm-messages');
-    var par = document.getElementById('room-output');
     socket.emit('messages' , msg.value , localStorage.getItem(socket.id));
-    var text = document.createTextNode('me: ' + msg.value);
-    var newEl = document.createElement("strong");
-    newEl.appendChild(text);
-    var newE = document.createElement("p");
-    newE.appendChild(newEl);
-    par.appendChild(newE);
     msg.value='';
 }
 
 function exitRoom() {
+    clearAllMessages();
   var modal = document.querySelector(".room-modal");
-  //empty all messages
   modal.style.display = "none";
+  socket.emit('leaveChatBox' ,localStorage.getItem(socket.id));
+
 }
 
 function updateUsers() {
@@ -123,4 +116,15 @@ function getCookie() {
 function roomCreation() {
     var modal = document.querySelector(".cr-room-modal");
     modal.style.display = "block";
+}
+
+function clearAllMessages() {
+    var myNode = document.getElementById("room-output");
+    while (myNode.firstChild) {
+        myNode.removeChild(myNode.firstChild);
+    }
+}
+
+function create() {
+    var modal = document.querySelector(".cr-room-modal");
 }

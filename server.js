@@ -36,6 +36,10 @@ io.on('connection', (socket) => {
     });
     socket.on('create' , (data1, data2) => {
         socket.join('ROOM:' + data1 + data2);
+        socket.on('leaveChatBox' , (userExiting) => {
+            socket.leave('ROOM:' + data1 + data2);
+            io.sockets.in('ROOM:' + data1 + data2).emit('newMsg' , ' left the chat' ,userExiting);
+        });
         socket.on('messages' , (message , username) => {
             io.sockets.in('ROOM:' + data1 + data2).emit('newMsg' , message, username);
         });
