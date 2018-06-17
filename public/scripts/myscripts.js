@@ -84,8 +84,8 @@ function createRoom (name) {
 }
 
 function logoutThisUser() {
-  console.log("change with erasing from array in server!");
-    //EMITTING TO SERVER TO CHANGE DATA ARRAY, EMIT TO CLIENTS TO KNOW, DC THE USER
+    socket.emit('remove' , localStorage.getItem(socket.id) , socket.id );
+    socket.disconnect();
 }
 
 function sendMessages() {

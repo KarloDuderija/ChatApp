@@ -44,6 +44,17 @@ io.on('connection', (socket) => {
     socket.on('findHim' , (data , name) => {
        socket.broadcast.emit('finding' , data, name);
     });
+    socket.on('remove' , (user , data) => {
+        var index = users.indexOf(user);
+        if (index > -1) {
+            console.log("Removing "+user);
+            users.splice(index, 1);
+            console.log(users);
+            socket.on('disconnect', () => {
+                io.emit('LoggedIn' , users, data);
+            });
+        }
+    });
     // socket.leave('ROOM:' +data2);
     // socket.broadcast.to('ROOM:' +data2).emit('newMsg' , 'Welcome');
 });
