@@ -10,6 +10,7 @@ const server = require('http').createServer(app);
 const port = 3000;
 //REQUIRES CLASS - implement with new instance
 const users = [];
+const rooms = [];
 const io = require('socket.io')(server);
 app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layouts'}));
 
@@ -59,8 +60,21 @@ io.on('connection', (socket) => {
             });
         }
     });
-    // socket.leave('ROOM:' +data2);
-    // socket.broadcast.to('ROOM:' +data2).emit('newMsg' , 'Welcome');
+    socket.on('createSpecificRoom' , (data) => {
+        rooms.push(data);
+        io.emit('roomUpdate' ,rooms);
+    });
+    socket.on('roomJoin' , (name , user) => {
+        socket.join('ROOM:'+name);
+        socket.on('leaveChatBox' , (userExiting) => {
+            socket.leave('ROOM:'+name);
+            io.sockets.in('ROOM:' +name).emit('newMsg' , 'User ' +userExiting+ ' has left the room', null);
+        });
+        io.sockets.in('ROOM:' +name).emit('newMsg' , 'Welcome '+user , null);
+        socket.on('messages' , (message , username) => {
+            io.sockets.in('ROOM:' +name).emit('newMsg' , message, username);
+        });
+    });
 });
 
 

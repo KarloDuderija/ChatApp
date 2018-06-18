@@ -19,13 +19,14 @@ var newUser = true;
 let temp;
 var el = document.querySelector("#TestBDC");
 var parentEl = document.querySelector("#ListOfUsers");
+var parent = document.querySelector("#ListOfRooms");
 if (el) {
     window.addEventListener("load", function (e) {
         socket.emit("newUser", socket.id);
         var user = localStorage.getItem('username');
         localStorage.setItem(socket.id, user);
     });
-    socket.on("LoggedIn", function (data) {
+    socket.on("LoggedIn", function (data , name) {
         console.log(data);
         updateUsers();
         console.log(localStorage.getItem(socket.id));
@@ -42,6 +43,17 @@ if (el) {
                 parentEl.appendChild(newEl);
             }
         }
+       socket.on('roomUpdate' , (data) => {
+           updateRooms();
+           for (var i = 0; i < data.length; i++) {
+                   var roomP = document.createTextNode(data[i]);
+                   var newEl = document.createElement("li");
+                   newEl.setAttribute("id", data[i]);
+                   newEl.setAttribute("onclick", "enterRoom(this.id)");
+                   newEl.appendChild(roomP);
+                   parent.appendChild(newEl);
+           }
+       });
     });
         //every user listens for PM req
     socket.on('finding' , (data, name) => {
@@ -59,7 +71,10 @@ if (el) {
 function receiveMsg() {
     socket.on('newMsg' ,(message , sender) => {
         var par = document.getElementById('room-output');
+        if(sender !== null)
         var text = document.createTextNode(sender + ': ' + message);
+        else if (sender === null)
+            text = document.createTextNode(message);
         var newEl = document.createElement("strong");
         newEl.appendChild(text);
         var newE = document.createElement("p");
@@ -97,7 +112,6 @@ function exitRoom() {
   var modal = document.querySelector(".room-modal");
   modal.style.display = "none";
   socket.emit('leaveChatBox' ,localStorage.getItem(socket.id));
-
 }
 
 function updateUsers() {
@@ -127,4 +141,21 @@ function clearAllMessages() {
 
 function create() {
     var modal = document.querySelector(".cr-room-modal");
+    var roomId =  document.getElementById("roomid");
+    modal.style.display = "none";
+    socket.emit('createSpecificRoom' , roomId.value);
+    roomId.value = '';
+}
+function updateRooms() {
+    var myNode = document.getElementById("ListOfRooms");
+    while (myNode.firstChild) {
+        myNode.removeChild(myNode.firstChild);
+    }
+}
+
+function enterRoom(name) {
+    socket.emit('roomJoin' , name , localStorage.getItem(socket.id));
+    var modals = document.querySelector(".room-modal");
+    modals.style.display = "block";
+    receiveMsg();
 }
