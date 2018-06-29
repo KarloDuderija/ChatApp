@@ -1,8 +1,34 @@
-<h1>{{title}}</h1>
-<p>Welcome to {{title}}</p>
-<div class="container">
-    <br/>
-    <button><a href="/login"> REGISTER </a></button>
-    <button><a href="#" onclick="testClick()"> TEST </a></button>
+<div id="entry-template">
 </div>
+<script>
+    // console.log(Handlebars.templates["third-tmpl"]());
+    if(getCookie())
+    {   socket.on('message' , (data) => {
+        console.log(data);
+        });
+        socket.emit('reqForUsers', 'hoy');
+        socket.on('resForUsers' , (data , rooms) => {
+            let axis = getCookie();
+            let context = {
+                title: 'ChatApp',
+                subtitle: axis,
+                user: data,
+                room: rooms
+            };
+            let holder = document.querySelector("#entry-template");
+            let er = Handlebars.templates.second(context);
+            holder.innerHTML = er;
+        });
+    }
+    else
+    {
+        let context = {
+            title: 'ChatApp :)',
+            subtitle: 'Welcome to ChatApp'
+        };
+        let plholder = document.querySelector("#entry-template");
+        let html = Handlebars.templates.first(context);
+        plholder.innerHTML = html;
+    }
 
+</script>

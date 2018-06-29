@@ -1,161 +1,73 @@
 const socket = io("http://localhost:3000");
-let username;
-function testClick() {
-  console.log("test click", socket);
-  socket.emit("TEST", { foo: "bar" });
-}
 
-function triggerSocketForUser() {
-  console.log("Client has logged in successfully: ");
-  username = document.getElementById("login-username").value;
-  socket.emit("user", username);
-  document.cookie = "ChatAppUser=" + username;
-  localStorage.setItem('username', username);
-  console.log(username);
-}
+let el = document.querySelector('#ListOfRooms');
+if(el) {
 
-var user_id = null;
-var newUser = true;
-let temp;
-var el = document.querySelector("#TestBDC");
-var parentEl = document.querySelector("#ListOfUsers");
-var parent = document.querySelector("#ListOfRooms");
-if (el) {
-    window.addEventListener("load", function (e) {
-        socket.emit("newUser", socket.id);
-        var user = localStorage.getItem('username');
-        localStorage.setItem(socket.id, user);
-    });
-    socket.on("LoggedIn", function (data , name) {
-        console.log(data);
-        updateUsers();
-        console.log(localStorage.getItem(socket.id));
-        temp = localStorage.getItem(socket.id);
-        // temp = getCookie();
-        // console.log(temp);
-        for (var i = 0; i < data.length; i++) {
-            if(temp !== data[i]){
-                user_id = document.createTextNode(data[i]);
-                var newEl = document.createElement("li");
-                newEl.setAttribute("id", data[i]);
-                newEl.setAttribute("onclick", "triggerTalk(this.id)");
-                newEl.appendChild(user_id);
-                parentEl.appendChild(newEl);
-            }
-        }
-       socket.on('roomUpdate' , (data) => {
-           updateRooms();
-           for (var i = 0; i < data.length; i++) {
-                   var roomP = document.createTextNode(data[i]);
-                   var newEl = document.createElement("li");
-                   newEl.setAttribute("id", data[i]);
-                   newEl.setAttribute("onclick", "enterRoom(this.id)");
-                   newEl.appendChild(roomP);
-                   parent.appendChild(newEl);
-           }
-       });
-    });
-        //every user listens for PM req
-    socket.on('finding' , (data, name) => {
-        if(''+localStorage.getItem(socket.id) === ''+data) {
-            console.log(''+localStorage.getItem(socket.id)+data+name);
-            console.log("im in!");
-            socket.emit('create' , data , name );
-            var modal = document.querySelector(".room-modal");
-            modal.style.display = "block";
-            receiveMsg();
-        }
-    });
 
 }
-function receiveMsg() {
-    socket.on('newMsg' ,(message , sender) => {
-        var par = document.getElementById('room-output');
-        if(sender !== null)
-        var text = document.createTextNode(sender + ': ' + message);
-        else if (sender === null)
-            text = document.createTextNode(message);
-        var newEl = document.createElement("strong");
-        newEl.appendChild(text);
-        var newE = document.createElement("p");
-        newE.appendChild(newEl);
-        par.appendChild(newE);
-    });
-}
 
-function triggerTalk(name) {
-    findUser(name);
-    console.log("im in!");
-    socket.emit('create' , name , localStorage.getItem(socket.id));
-    var modals = document.querySelector(".room-modal");
-    modals.style.display = "block";
-  receiveMsg();
-}
+function bakeCookieForUser() {
+    let username;
+    username =  document.getElementById("login-username").value;
+    document.cookie = "ChatAppUser=" + username;
+} //here we set cookie of the user on submit form button click
 
-function findUser (name) {
-    socket.emit('findHim' , name, localStorage.getItem(socket.id));
+function getCookie() {
+    let re = /(;\s*|^)ChatAppUser=(\w+)/;
+    let matches = document.cookie.match(re);
+    return matches ? matches[matches.length-1] : null;
 }
 
 function logoutThisUser() {
-    socket.emit('remove' , localStorage.getItem(socket.id) , socket.id );
+    let me = getCookie();
+    socket.emit('remove' ,me);
     socket.disconnect();
+    deleteCookie('ChatAppUser='+me);
+}
+
+function deleteCookie (name) {
+    console.log('deleting cookies...');
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
 
 function sendMessages() {
-    var msg = document.getElementById('rm-messages');
-    socket.emit('messages' , msg.value , localStorage.getItem(socket.id));
+    let msg = document.getElementById('rm-messages');
+    let me = getCookie();
+    let name = localStorage.getItem(socket.id);
+    socket.emit('reqForMsg' , name, me, msg.value);
     msg.value='';
 }
 
 function exitRoom() {
-    clearAllMessages();
-  var modal = document.querySelector(".room-modal");
-  modal.style.display = "none";
-  socket.emit('leaveChatBox' ,localStorage.getItem(socket.id));
-}
-
-function updateUsers() {
-  var myNode = document.getElementById("ListOfUsers");
-  while (myNode.firstChild) {
-    myNode.removeChild(myNode.firstChild);
-  }
-}
-
-function getCookie() {
-    var re = /(;\s*|^)ChatAppUser=(\w+)/;
-    var matches = document.cookie.match(re);
-    return matches ? matches[matches.length-1] : null;
+    let me = getCookie();
+    let modal = document.querySelector(".room-modal");
+    modal.style.display = "none";
+    let name = localStorage.getItem(socket.id);
+    console.log(name);
+    socket.emit('leaveRoom' , name, me);
+    localStorage.removeItem(socket.id);
 }
 
 function roomCreation() {
-    var modal = document.querySelector(".cr-room-modal");
+    let modal = document.querySelector(".cr-room-modal");
     modal.style.display = "block";
 }
 
-function clearAllMessages() {
-    var myNode = document.getElementById("room-output");
-    while (myNode.firstChild) {
-        myNode.removeChild(myNode.firstChild);
-    }
-}
-
 function create() {
-    var modal = document.querySelector(".cr-room-modal");
-    var roomId =  document.getElementById("roomid");
+    let modal = document.querySelector(".cr-room-modal");
+    let roomId =  document.getElementById("roomid");
     modal.style.display = "none";
     socket.emit('createSpecificRoom' , roomId.value);
     roomId.value = '';
 }
-function updateRooms() {
-    var myNode = document.getElementById("ListOfRooms");
-    while (myNode.firstChild) {
-        myNode.removeChild(myNode.firstChild);
-    }
-}
 
 function enterRoom(name) {
-    socket.emit('roomJoin' , name , localStorage.getItem(socket.id));
-    var modals = document.querySelector(".room-modal");
+    let me = getCookie();                   //get my username
+    if(name.innerHTML)                      // get the value not the dom element
+        name = name.innerHTML;
+    socket.emit('roomJoin' , name , me);    // send that info to the server
+    let modals = document.querySelector(".room-modal");
     modals.style.display = "block";
-    receiveMsg();
+    localStorage.setItem(socket.id, name);  //set the current room on socket id
 }
+

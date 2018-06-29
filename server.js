@@ -1,14 +1,10 @@
-// 'use strict';
-let ISUSERLOGGED = false;
 const express = require('express');
 const app = express();
 const hbs = require('express-handlebars');
 const path = require('path');
-// const sessions = require('express-session');
 const bodyParser = require('body-parser');
 const server = require('http').createServer(app);
 const port = 3000;
-//REQUIRES CLASS - implement with new instance
 const users = [];
 const rooms = [];
 const io = require('socket.io')(server);
@@ -23,87 +19,63 @@ app.use('/static', express.static(path.join(__dirname, 'public')));
 
 
 io.on('connection', (socket) => {
-    console.log('Server side is connected ' + socket.id);
-    socket.on('TEST', (obj) => {
-        console.log('Test IO connection with object', obj);
+    socket.on('reqForUsers' , (data) => {
+        io.emit('resForUsers' , users, rooms);
     });
-    socket.on('user', (user) => {
-       users.push(user);
-       console.log('His name is:', user);
-    });
-    socket.on('newUser', (data) => {
-        io.emit('LoggedIn' , users, data);
-        console.log(users);
-    });
-    socket.on('create' , (data1, data2) => {
-        socket.join('ROOM:' + data1 + data2);
-        socket.on('leaveChatBox' , (userExiting) => {
-            socket.leave('ROOM:' + data1 + data2);
-            io.sockets.in('ROOM:' + data1 + data2).emit('newMsg' , ' left the chat' ,userExiting);
-        });
-        socket.on('messages' , (message , username) => {
-            io.sockets.in('ROOM:' + data1 + data2).emit('newMsg' , message, username);
-        });
-        console.log('ROOM:' + data1 + data2);
-    });
-    socket.on('findHim' , (data , name) => {
-       socket.broadcast.emit('finding' , data, name);
-    });
-    socket.on('remove' , (user , data) => {
-        var index = users.indexOf(user);
-        if (index > -1) {
-            console.log("Removing "+user);
-            users.splice(index, 1);
-            console.log(users);
-            socket.on('disconnect', () => {
-                io.emit('LoggedIn' , users, data);
-            });
-        }
-    });
-    socket.on('createSpecificRoom' , (data) => {
+    socket.on('createSpecificRoom', (data) => {
         rooms.push(data);
-        io.emit('roomUpdate' ,rooms);
+        io.emit('resForUsers' , users, rooms);
     });
     socket.on('roomJoin' , (name , user) => {
         socket.join('ROOM:'+name);
-        socket.on('leaveChatBox' , (userExiting) => {
-            socket.leave('ROOM:'+name);
-            io.sockets.in('ROOM:' +name).emit('newMsg' , 'User ' +userExiting+ ' has left the room', null);
-        });
-        io.sockets.in('ROOM:' +name).emit('newMsg' , 'Welcome '+user , null);
-        socket.on('messages' , (message , username) => {
-            io.sockets.in('ROOM:' +name).emit('newMsg' , message, username);
-        });
+        io.sockets.in('ROOM:'+name).emit('message', 'Welcome ' + user);
+        //BDC that new user entered here
+    });
+    socket.on('leaveRoom' , (name, user) => {
+       socket.leave('ROOM:'+name , function(err) {
+         console.log(err);
+           io.sockets.in('ROOM:'+name).emit('message', user + ' has left the room');
+         //BDC that new user left here
+       });
+    });
+    socket.on('reqForMsg' , (name, user, message) => {
+           io.sockets.in('ROOM:'+name).emit('message', user+ ': ' +message);
+        //BDC that new message(message) arrived at that room(name) from that user (user)
+    });
+    socket.on('remove' , (user) => {
+        let index = users.indexOf(user);
+        if (index > -1) {
+            console.log("Removing "+user);
+            users.splice(index, 1);
+        }
+        console.log(users);
+        io.emit('resForUsers' , users, rooms);
     });
 });
 
-
-
 app.get('/', (req, res, next) => {
-    res.render('index', {title: 'ChatApp'});
+    res.render('index',{bigtitle:'ChatApp'});
 });
 
 app.post('/', (req, res, next) => {
-    res.render('admin', {title:'ChatApp'});
+    clearDuplicates(req.body.username);
+    users.push(req.body.username);
+    res.render('index', {bigtitle:'ChatApp'});
 });
 
 app.get('/login', (req, res, next) => {
     res.render('login', {title: 'Login new user'});
 });
 
-app.post('/login', (req, res, next) => {
-    //res.end(JSON.stringify(req.body));
-    // if(!!req.body.username && !!req.body.password)
-    // {
-    //     ISUSERLOGGED = true;
-    //     // res.redirect('http:localhost:3000');
-    // }
-    // else { res.end('You shall not pass!!')}
-});
-
 app.get('/logout', (req, res, next) => {
     res.render('logout', {title: 'Thank you for using ChatApp'});
 });
 
-server.listen(port, () => console.log(port));
+function clearDuplicates(clear) {
+    for( let i=0; i<users.length; i++) {
+        if(clear === users[i])
+            users.splice(i,1);
+    }
+}
 
+server.listen(port, () => console.log(port));
