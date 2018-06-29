@@ -21,11 +21,11 @@ app.use('/static', express.static(path.join(__dirname, 'public')));
 io.on('connection', (socket) => {
     socket.on('reqForUsers' , (data) => {
         io.emit('resForUsers' , users, rooms);
-    });
+    }); //this renders the templates
     socket.on('createSpecificRoom', (data) => {
         rooms.push(data);
         io.emit('resForUsers' , users, rooms);
-    });
+    }); //create room for users
     socket.on('roomJoin' , (name , user) => {
         socket.join('ROOM:'+name);
         io.sockets.in('ROOM:'+name).emit('message', 'Welcome ' + user);
@@ -33,7 +33,6 @@ io.on('connection', (socket) => {
     });
     socket.on('leaveRoom' , (name, user) => {
        socket.leave('ROOM:'+name , function(err) {
-         console.log(err);
            io.sockets.in('ROOM:'+name).emit('message', user + ' has left the room');
          //BDC that new user left here
        });
@@ -48,10 +47,19 @@ io.on('connection', (socket) => {
             console.log("Removing "+user);
             users.splice(index, 1);
         }
-        console.log(users);
         io.emit('resForUsers' , users, rooms);
-    });
+    }); //we remove specific user from the 'database' of users, user that logged out
+    socket.on('findSpecific' , (target, me) => {
+       io.emit('lookingFor' , target, me);
+    }); //triggering the event in which we seek for the user to PM
+    socket.on('privateRoomJoin' , (target , me) => {
+        socket.join('ROOM:'+ target + me);
+        io.sockets.in('ROOM:'+ target + me).emit('message', 'Welcome');
+        console.log('ROOM:'+ target + me);
+    }); //both PM users join the room
 });
+
+//all the http requests & responses are here
 
 app.get('/', (req, res, next) => {
     res.render('index',{bigtitle:'ChatApp'});

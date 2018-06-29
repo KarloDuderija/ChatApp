@@ -10,7 +10,7 @@ function bakeCookieForUser() {
     let username;
     username =  document.getElementById("login-username").value;
     document.cookie = "ChatAppUser=" + username;
-} //here we set cookie of the user on submit form button click
+}
 
 function getCookie() {
     let re = /(;\s*|^)ChatAppUser=(\w+)/;
@@ -46,7 +46,7 @@ function exitRoom() {
     console.log(name);
     socket.emit('leaveRoom' , name, me);
     localStorage.removeItem(socket.id);
-}
+} //name refers to the room name, me is my username
 
 function roomCreation() {
     let modal = document.querySelector(".cr-room-modal");
@@ -62,12 +62,29 @@ function create() {
 }
 
 function enterRoom(name) {
-    let me = getCookie();                   //get my username
-    if(name.innerHTML)                      // get the value not the dom element
+    let me = getCookie();
+    if(name.innerHTML)
         name = name.innerHTML;
-    socket.emit('roomJoin' , name , me);    // send that info to the server
+    socket.emit('roomJoin' , name , me);
     let modals = document.querySelector(".room-modal");
     modals.style.display = "block";
-    localStorage.setItem(socket.id, name);  //set the current room on socket id
+    localStorage.setItem(socket.id, name);
 }
 
+function triggerTalk(target) {
+    let me = getCookie();
+    if(target.innerHTML)
+        target = target.innerHTML;
+    socket.emit('privateRoomJoin' , target , me);
+    let modals = document.querySelector(".room-modal");
+    modals.style.display = "block";
+    socket.emit('findSpecific' , target, me);
+    localStorage.setItem(socket.id, target + '' + me);
+}
+
+function foundUser (target , name) {
+        socket.emit('privateRoomJoin' , target , name);
+        localStorage.setItem(socket.id, target + '' + name);
+        let modals = document.querySelector(".room-modal");
+        modals.style.display = "block";
+}

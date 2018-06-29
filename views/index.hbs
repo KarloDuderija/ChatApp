@@ -4,7 +4,12 @@
     // console.log(Handlebars.templates["third-tmpl"]());
     if(getCookie())
     {   socket.on('message' , (data) => {
-        console.log(data);
+        console.log(data); //here is where I have to rerender the page with room content
+        });
+        socket.on('lookingFor', (target, name) => {
+            let me = getCookie();
+            if(target === me)
+                foundUser(target, name);
         });
         socket.emit('reqForUsers', 'hoy');
         socket.on('resForUsers' , (data , rooms) => {
