@@ -7,10 +7,13 @@ const server = require('http').createServer(app);
 const port = 3000;
 const users = [];
 const rooms = [];
-const roomExmpl = [];
 const io = require('socket.io')(server);
+function Room(roomId, messages) {
+    this.roomId = roomId;
+    this.messages = [messages];
+}
+const roomExmpl = [];
 app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layouts'}));
-let obj = {};
 app.set('port', port);
 app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'hbs');
@@ -21,18 +24,19 @@ app.use('/static', express.static(path.join(__dirname, 'public')));
 //create the room object and change the template to iterate the room.id , room.clients and room.messages
 // room.id should be on triggerTalk and on enterRoom
 io.on('connection', (socket) => {
-    obj.messages = [];
+    let obj = {};
     socket.on('reqForUsers' , (data) => {
         io.emit('resForUsers' , users, rooms);
     }); //this renders the templates
 
     socket.on('createSpecificRoom', (data) => {
+        obj['roomId'] = data;
         rooms.push(data);
-        obj.id = data;
         io.emit('resForUsers' , users, rooms);
     }); //create room for users
 
     socket.on('roomJoin' , (name , user) => {
+        obj['roomId'] = name;
         socket.join('ROOM:'+name);
         io.sockets.in('ROOM:'+name).emit('message', 'Welcome ' + user);
         //BDC that new user entered here
@@ -46,9 +50,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('reqForMsg' , (name, user, message) => {
-            obj.messages.push(message);
-            updateSpecificRoomState(obj.id);
-            roomExmpl.push(obj);
+            obj['message']= user+ ': ' +message;
+            createHistory(obj);
+            console.log(roomExmpl);
            io.sockets.in('ROOM:'+name).emit('message', user+ ': ' +message);
         //BDC that new message(message) arrived at that room(name) from that user (user)
     });
@@ -67,7 +71,7 @@ io.on('connection', (socket) => {
     }); //triggering the event in which we seek for the user to PM
 
     socket.on('privateRoomJoin' , (target , me) => {
-        obj.id = target+''+me;
+        obj.roomId = target+''+me;
         socket.join('ROOM:'+ target + me);
         io.sockets.in('ROOM:'+ target + me).emit('message', 'Welcome');
         console.log('ROOM:'+ target + me);
@@ -100,13 +104,16 @@ function clearDuplicates(clear) {
             users.splice(i,1);
     }
 }
-function updateSpecificRoomState (specificRoomId) {
-    if(roomExmpl.id)
-    for (let i=0; i<roomExmpl.length ; i++) {
-        if(specificRoomId === roomExmpl.id){
-            roomExmpl.splice(i,1);
-        }
+function createHistory (obj) {
+    if(roomExmpl.length > 0)
+    for(let i=0; i<roomExmpl.length ; i++) {
+        if(roomExmpl[i].roomId === obj.roomId)
+            roomExmpl[i].messages.push(obj.message);
+        else
+            roomExmpl.push(new Room(obj.roomId , obj.message));
     }
+    else
+        roomExmpl.push(new Room(obj.roomId, obj.message));
 }
 
 server.listen(port, () => console.log(port));
