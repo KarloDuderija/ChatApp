@@ -8,9 +8,10 @@ const port = 3000;
 const users = [];
 const rooms = [];
 const io = require('socket.io')(server);
-function Room(roomId, messages) {
+function Room(roomId, messages, roomClients) {
     this.roomId = roomId;
     this.messages = [messages];
+    this.roomClients = roomClients;
 }
 const roomExmpl = [];
 app.engine('hbs', hbs({extname: 'hbs', defaultLayout: 'layouts'}));
@@ -26,23 +27,33 @@ app.use('/static', express.static(path.join(__dirname, 'public')));
 io.on('connection', (socket) => {
     let obj = {};
     socket.on('reqForUsers' , (data) => {
-        io.emit('resForUsers' , users, rooms);
+        io.emit('resForUsers' , users, rooms);  //---> users from POST req
     }); //this renders the templates
 
     socket.on('createSpecificRoom', (data) => {
         obj['roomId'] = data;
+        obj['message'] = 'Welcome';
+        obj['roomUsers'] = 0;
         rooms.push(data);
         io.emit('resForUsers' , users, rooms);
+        roomCreation(obj);
     }); //create room for users
 
     socket.on('roomJoin' , (name , user) => {
         obj['roomId'] = name;
+        obj['message'] = 'Welcome ' + user;
+        obj['roomUsers'] = 1;
+        updateRoomState(obj);
         socket.join('ROOM:'+name);
         io.sockets.in('ROOM:'+name).emit('message', 'Welcome ' + user);
         //BDC that new user entered here
     });
 
     socket.on('leaveRoom' , (name, user) => {
+        obj['roomId'] = name;
+        obj['message'] = user + ' has left the room';
+        obj['roomUsers'] = -1;
+        updateRoomState(obj);
        socket.leave('ROOM:'+name , function(err) {
            io.sockets.in('ROOM:'+name).emit('message', user + ' has left the room');
          //BDC that new user left here
@@ -71,10 +82,12 @@ io.on('connection', (socket) => {
     }); //triggering the event in which we seek for the user to PM
 
     socket.on('privateRoomJoin' , (target , me) => {
-        obj.roomId = target+''+me;
+        obj['roomId'] = ''+ target + me;
+        obj['message'] = 'Welcome';
+        obj['roomUsers'] = 2;
+        createHistory(obj);
         socket.join('ROOM:'+ target + me);
         io.sockets.in('ROOM:'+ target + me).emit('message', 'Welcome');
-        console.log('ROOM:'+ target + me);
     }); //both PM users join the room
 });
 
@@ -104,16 +117,24 @@ function clearDuplicates(clear) {
             users.splice(i,1);
     }
 }
-function createHistory (obj) {
-    if(roomExmpl.length > 0)
-    for(let i=0; i<roomExmpl.length ; i++) {
+function roomCreation(obj) {
+   roomExmpl.push(new Room (obj.roomId, obj.message, obj.roomUsers));
+}
+function updateRoomState(obj){
+    for(let i=0; i<roomExmpl.length; i++) {
         if(roomExmpl[i].roomId === obj.roomId)
+            roomExmpl[i].roomClients = roomExmpl[i].roomClients + obj.roomUsers;
             roomExmpl[i].messages.push(obj.message);
-        else
-            roomExmpl.push(new Room(obj.roomId , obj.message));
+    }
+}
+function createHistory(obj) {
+    if(roomExmpl.length > 0)
+    for(let i=0; i<roomExmpl.length; i++) {
+        if(roomExmpl[i].roomId === obj.roomId)
+             roomExmpl[i].messages.push(obj.message);
     }
     else
-        roomExmpl.push(new Room(obj.roomId, obj.message));
+        roomExmpl.push(new Room (obj.roomId, obj.message, obj.roomUsers));
 }
 
 server.listen(port, () => console.log(port));
