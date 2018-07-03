@@ -4,7 +4,13 @@
     // console.log(Handlebars.templates["third-tmpl"]());
     if(getCookie())
     {   socket.on('message' , (data) => {
-        console.log(data); //here is where I have to rerender the page with room content
+        let par = document.getElementById('room-output');
+        let text = document.createTextNode(data);
+        let newEl = document.createElement("strong");
+        newEl.appendChild(text);
+        let newE = document.createElement("p");
+        newE.appendChild(newEl);
+        par.appendChild(newE);
         });
         socket.on('lookingFor', (target, name) => {
             let me = getCookie();
@@ -35,5 +41,18 @@
         let html = Handlebars.templates.first(context);
         plholder.innerHTML = html;
     }
+    // socket.on('', (,) => {
+    //     let axis = getCookie();
+    //     let context = {
+    //         title: 'ChatApp',
+    //         subtitle: axis,
+    //         user: data,
+    //         room: rooms
+    //     };
+    //     let holder = document.querySelector("#entry-template");
+    //     let er = Handlebars.templates.second(context);
+    //     holder.innerHTML = er;
+    //
+    // });
 
 </script>

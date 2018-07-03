@@ -64,7 +64,9 @@ function create() {
 function enterRoom(name) {
     let me = getCookie();
     if(name.innerHTML)
+    {
         name = name.innerHTML;
+    }
     socket.emit('roomJoin' , name , me);
     let modals = document.querySelector(".room-modal");
     modals.style.display = "block";
@@ -74,7 +76,9 @@ function enterRoom(name) {
 function triggerTalk(target) {
     let me = getCookie();
     if(target.innerHTML)
+    {
         target = target.innerHTML;
+    }
     socket.emit('privateRoomJoin' , target , me);
     let modals = document.querySelector(".room-modal");
     modals.style.display = "block";

@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const server = require('http').createServer(app);
 const port = 3000;
 const users = [];
-const rooms = [];
+// const rooms = [];
 const io = require('socket.io')(server);
 function Room(roomId, messages, roomClients) {
     this.roomId = roomId;
@@ -27,16 +27,16 @@ app.use('/static', express.static(path.join(__dirname, 'public')));
 io.on('connection', (socket) => {
     let obj = {};
     socket.on('reqForUsers' , (data) => {
-        io.emit('resForUsers' , users, rooms);  //---> users from POST req
+        io.emit('resForUsers' , users, roomExmpl);  //---> users from POST req
     }); //this renders the templates
 
     socket.on('createSpecificRoom', (data) => {
         obj['roomId'] = data;
         obj['message'] = 'Welcome';
         obj['roomUsers'] = 0;
-        rooms.push(data);
-        io.emit('resForUsers' , users, rooms);
+        // rooms.push(data);
         roomCreation(obj);
+        io.emit('resForUsers' , users, roomExmpl);
     }); //create room for users
 
     socket.on('roomJoin' , (name , user) => {
@@ -46,6 +46,7 @@ io.on('connection', (socket) => {
         updateRoomState(obj);
         socket.join('ROOM:'+name);
         io.sockets.in('ROOM:'+name).emit('message', 'Welcome ' + user);
+        io.emit('resForRooms' , users, roomExmpl);
         //BDC that new user entered here
     });
 
@@ -58,6 +59,7 @@ io.on('connection', (socket) => {
            io.sockets.in('ROOM:'+name).emit('message', user + ' has left the room');
          //BDC that new user left here
        });
+        // io.emit('resForUsers' , users, roomExmpl);
     });
 
     socket.on('reqForMsg' , (name, user, message) => {
@@ -74,7 +76,7 @@ io.on('connection', (socket) => {
             console.log("Removing "+user);
             users.splice(index, 1);
         }
-        io.emit('resForUsers' , users, rooms);
+        // io.emit('resForUsers' , users, roomExmpl);
     }); //we remove specific user from the 'database' of users, user that logged out
 
     socket.on('findSpecific' , (target, me) => {
@@ -82,10 +84,6 @@ io.on('connection', (socket) => {
     }); //triggering the event in which we seek for the user to PM
 
     socket.on('privateRoomJoin' , (target , me) => {
-        obj['roomId'] = ''+ target + me;
-        obj['message'] = 'Welcome';
-        obj['roomUsers'] = 2;
-        createHistory(obj);
         socket.join('ROOM:'+ target + me);
         io.sockets.in('ROOM:'+ target + me).emit('message', 'Welcome');
     }); //both PM users join the room
@@ -120,11 +118,12 @@ function clearDuplicates(clear) {
 function roomCreation(obj) {
    roomExmpl.push(new Room (obj.roomId, obj.message, obj.roomUsers));
 }
-function updateRoomState(obj){
-    for(let i=0; i<roomExmpl.length; i++) {
-        if(roomExmpl[i].roomId === obj.roomId)
+function updateRoomState(obj) {
+    for (let i = 0; i < roomExmpl.length; i++) {
+        if (roomExmpl[i].roomId === obj.roomId) {
             roomExmpl[i].roomClients = roomExmpl[i].roomClients + obj.roomUsers;
             roomExmpl[i].messages.push(obj.message);
+        }
     }
 }
 function createHistory(obj) {
@@ -136,5 +135,6 @@ function createHistory(obj) {
     else
         roomExmpl.push(new Room (obj.roomId, obj.message, obj.roomUsers));
 }
+
 
 server.listen(port, () => console.log(port));

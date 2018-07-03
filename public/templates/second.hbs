@@ -10,7 +10,9 @@
         </ul>
         <ul id="ListOfRooms">
             {{#each room}}
-                   <li id={{this}} onclick="enterRoom({{this}})">{{this}}</li>
+                {{#if this.roomId}}
+                <li id={{this.roomId}} onclick="enterRoom({{this.roomId}})">{{this.roomId}}</li>
+                {{/if}}
             {{/each}}
         </ul>
     </div>
